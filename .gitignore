@@ -1,0 +1,13 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/backend/.vs
+/backend/CompanyManagement.Test/bin/Debug
+/backend/CompanyManagement.Test/obj
+/backend/CompanyManagement.API/obj
+/backend/CompanyManagement.API/bin/Debug/net7.0
+/backend/CompanyManagement.Tests/bin/Debug
+/backend/CompanyManagement.Tests/obj
+/frontend/.vs
+/.vs

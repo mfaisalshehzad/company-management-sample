@@ -1,0 +1,15 @@
+.simple-grid {
+    grid-template-columns: 5% 20% 20% 10% 12% 18% 5% 5%;
+
+    @screen sm {
+        grid-template-columns: 5% 20% 20% 10% 12% 18% 5% 5%;
+    }
+
+    @screen md {
+        grid-template-columns: 5% 20% 20% 10% 12% 18% 5% 5%;
+    }
+
+    @screen lg {
+        grid-template-columns: 5% 20% 20% 10% 12% 18% 5% 5%;
+    }
+}

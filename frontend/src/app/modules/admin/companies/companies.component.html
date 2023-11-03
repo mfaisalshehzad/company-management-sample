@@ -1,0 +1,174 @@
+<div class="sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+    <!-- Header -->
+    <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-8 px-6 md:px-8 border-b">
+        <!-- Loader -->
+        <div class="absolute inset-x-0 bottom-0"
+             *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <!-- Title -->
+        <div class="text-4xl font-extrabold tracking-tight">Companies</div>
+        <!-- Actions -->
+        <div class="flex flex-row shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <!-- Add Comapany button -->
+            <button mat-fab class="ml-4"
+                    [color]="'primary'"
+                    (click)="createCompany()"
+                    aria-label="Create Company">
+                <mat-icon>add</mat-icon>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Companies list -->
+    <div class=" overflow-hidden sm:overflow-y-auto">
+        <div class="relative flex flex-col flex-auto items-center px-6 sm:px-12">
+            <div class="w-full">
+                <form [formGroup]="searchForm">
+                    <div class="mt-6">
+                        <div class="">
+                            <ng-container>
+                                <div class="relative flex">
+                                    <mat-form-field class="fuse-mat-no-subscript flex-auto">
+                                        <mat-label>Company No</mat-label>
+                                        <input matInput
+                                               type="number"
+                                               [formControlName]="'companyNo'"
+                                               [placeholder]="'Company No'">
+                                    </mat-form-field>
+                                    <mat-form-field class="fuse-mat-no-subscript flex-auto  ml-2 ">
+                                        <mat-label>Company Name</mat-label>
+                                        <input matInput
+                                               [formControlName]="'companyName'"
+                                               [placeholder]="'Company Name'">
+                                    </mat-form-field>
+                                    <mat-form-field class="fuse-mat-no-subscript flex-auto ml-2">
+                                        <mat-label>Industry</mat-label>
+                                        <mat-select [formControlName]="'industry'">
+                                            <mat-option [value]="">Please select</mat-option>
+                                            <mat-option *ngFor="let industryType of industryTypes" [value]="industryType.value">{{ industryType.label }}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field class="fuse-mat-no-subscript flex-auto ml-2 ">
+                                        <mat-label>City</mat-label>
+                                        <input matInput
+                                               [formControlName]="'city'"
+                                               [placeholder]="'City'">
+                                    </mat-form-field>
+                                    <mat-form-field class="fuse-mat-no-subscript flex-auto ml-2">
+                                        <mat-label>Parent Company Name</mat-label>
+                                        <input matInput
+                                               [formControlName]="'parentCompany'"
+                                               [placeholder]="'Parent Company Name'">
+                                    </mat-form-field>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <div class="" style="float:right">
+                            <ng-container>
+                                <button class="ml-2"
+                                        mat-flat-button
+                                        [color]="'primary'"
+                                        [matTooltip]="'Search'"
+                                        (click)="search()">
+                                    Search
+                                </button>
+                                <button class="ml-auto"
+                                        mat-button
+                                        [matTooltip]="'Reset'"
+                                        (click)="resetSearch()">
+                                    Reset
+                                </button>
+                            </ng-container>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <hr />
+
+        <div class="relative flex flex-col flex-auto items-center px-12 sm:px-12">
+            <div class="w-full" style="overflow-x: auto;">
+                <div class="">
+                    <ng-container *ngIf="(companies | async) as result">
+                        <ng-container *ngIf="result.length > 0; else noCompanies">
+                            <div class="grid">
+                                <!-- Header -->
+                                <div class="simple-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                                     matSort
+                                     matSortDisableClear>
+                                    <div [mat-sort-header]="'CompanyNo'">Company No</div>
+                                    <div [mat-sort-header]="'Industry'">Industry </div>
+                                    <div [mat-sort-header]="'CompanyName'">Company Name</div>
+                                    <div [mat-sort-header]="'NumberOfEmployees'">No Of Employees</div>
+                                    <div [mat-sort-header]="'City'">City</div>
+                                    <div [mat-sort-header]="'ParentCompany'">Parent company</div>
+                                    <div>Company Level</div>
+                                    <div>Action</div>
+                                </div>
+
+                                <!-- Rows -->
+                                <ng-container *ngIf="(companies | async) as result">
+                                    <ng-container *ngFor="let company of result; trackBy: trackByFn">
+                                        <div class="simple-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+                                            <div>{{company.companyNo}}</div>
+                                            <div>{{company.industry}}</div>
+                                            <div>{{company.companyName}}</div>
+                                            <div>{{company.numberOfEmployees}}</div>
+                                            <div>{{company.city}}</div>
+                                            <div>{{company.parentCompany}}</div>
+                                            <div>{{company.companyLevel}}</div>
+                                            <div>
+                                                <button mat-icon-button aria-label="Edit Company" (click)="editCompany(company.id)">
+                                                    <mat-icon>edit</mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </ng-container>
+                                </ng-container>
+
+                                <mat-paginator class="sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                                               [ngClass]="{'pointer-events-none': isLoading}"
+                                               [length]="pagination.totalRecords"
+                                               [pageIndex]="pagination.pageIndex"
+                                               [pageSize]="pagination.pageSize"
+                                               [pageSizeOptions]="[5, 10, 25, 100]"
+                                               [showFirstLastButtons]="true"></mat-paginator>
+
+                            </div>
+                        </ng-container>
+                    </ng-container>
+
+                    <ng-template #noCompanies>
+                        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">No companies found</div>
+                    </ng-template>
+
+
+
+                </div>
+
+            </div>
+            <hr />
+            <div class="w-full">
+                <div class="">
+                    <button style="float:right; margin-bottom:50px" mat-fab class="ml-4"
+                            [color]="'primary'"
+                            (click)="createCompany()"
+                            aria-label="Create Company">
+                        <mat-icon>add</mat-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+    </div>
+</div>

@@ -1,0 +1,114 @@
+<div class="dialog-content-wrapper">
+    <mat-toolbar matDialogTitle class="mat-accent m-0">
+        <mat-toolbar-row fxLayout="row" fxLayoutAlign="space-between center">
+            <span class="title dialog-title">{{dialogTitle}}</span>
+            <button mat-icon-button (click)="closeDialog()" style=" margin-left: auto;" aria-label="Close dialog">
+                <mat-icon>close</mat-icon>
+            </button>
+        </mat-toolbar-row>
+    </mat-toolbar>
+
+    <div mat-dialog-content class="m-0" fusePerfectScrollbar>
+        <form [formGroup]="companyForm">
+            <div class="w-full">
+                <!-- Company No -->
+                <div class="mt-6">
+                    <div class="relative flex">
+                        <mat-form-field class="fuse-mat-no-subscript flex-auto">
+                            <mat-label>Company No</mat-label>
+                            <input matInput
+                                   type="number"
+                                   disabled
+                                   readonly
+                                   [formControlName]="'companyNo'"
+                                   [placeholder]="'Company No'">
+                        </mat-form-field>
+                        <mat-form-field class="fuse-mat-no-subscript flex-auto ml-2">
+                            <mat-label>Company Name</mat-label>
+                            <input matInput
+                                   [formControlName]="'companyName'"
+                                   [placeholder]="'Company Name'"
+                                   [spellcheck]="true">
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full">
+                <div class="mt-6">
+                    <div class="relative flex">
+                        <mat-form-field class="fuse-mat-no-subscript flex-auto">
+                            <mat-label>Industry Type</mat-label>
+                            <mat-select [formControlName]="'industry'">
+                                <mat-option [value]="">Please select</mat-option>
+                                <mat-option *ngFor="let industryType of industryTypes" [value]="industryType.value">{{ industryType.label }}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                </div>
+            </div>
+            <div class="w-full">
+                <div class="mt-6">
+                    <div class="relative flex">
+                        <mat-form-field class="fuse-mat-no-subscript flex-auto">
+                            <mat-label>Number of Employees</mat-label>
+                            <input matInput
+                                   type="number"
+                                   [formControlName]="'numberOfEmployees'"
+                                   [placeholder]="'Number Of Employees'">
+                        </mat-form-field>
+                        <mat-form-field class="fuse-mat-no-subscript flex-auto ml-2">
+                            <mat-label>City</mat-label>
+                            <input matInput
+                                   [formControlName]="'city'"
+                                   [placeholder]="'City'">
+                        </mat-form-field>
+                    </div>
+
+                </div>
+            </div>
+            <div class="w-full">
+                <div class="mt-6">
+                    <div class="relative flex">
+                        <mat-form-field class="fuse-mat-no-subscript flex-auto">
+                            <mat-label>Parent Company</mat-label>
+                            <mat-select [formControlName]="'parentCompanyId'">
+                                <mat-option></mat-option>
+                                <mat-option *ngFor="let company of companiesDropdownData" [value]="company.value">{{ company.label }}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full" *ngIf="errorMessage">
+                <div class="mt-12">
+                    <div class="relative flex">
+                        <fuse-alert [type]="'error'">
+                            <span fuseAlertTitle>Save Company Error</span>
+                            {{errorMessage}}
+                        </fuse-alert>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <div mat-dialog-actions class="m-0 p-4" fxLayout="row" fxLayoutAlign="space-between">
+        <button mat-raised-button
+                (click)="createOrUpdateCompany()"
+                class="save-button mat-accent"
+                [disabled]="companyForm.invalid && !errorMessage"
+                aria-label="SAVE">
+            Save
+        </button>
+
+        <button mat-raised-button
+                (click)="closeDialog()"
+                aria-label="Cancel"
+                matTooltip="Cancel">
+            Cancel
+        </button>
+
+    </div>
+</div>

@@ -10,26 +10,24 @@ using CompanyManagement.API.ViewModels;
 
 using Microsoft.EntityFrameworkCore;
 
+using System.ComponentModel;
+
 namespace CompanyManagement.API.Services
 {
     public class CompanyService : ICompanyService
     {
         private readonly AppDbContext _dbContext;
         private readonly ILogger<CompanyService> _logger;
-        private readonly IHttpContextAccessor _accessor;
         private readonly IMapper _mapper;
-        private readonly IConfiguration _config;
 
 
         public CompanyService(AppDbContext dbContext,
-            ILogger<CompanyService> logger,
-            IHttpContextAccessor accessor, IMapper mapper, IConfiguration config)
+            IMapper mapper,
+            ILogger<CompanyService> logger)
         {
             _dbContext = dbContext;
             _logger = logger;
-            _accessor = accessor;
             _mapper = mapper;
-            _config = config;
         }
 
         public async Task<CompanyViewModel> Get(Guid id)
@@ -40,12 +38,22 @@ namespace CompanyManagement.API.Services
                     .Companies
                     .Include(c => c.ParentCompany)
                     .FirstOrDefaultAsync(c => c.Id == id);
+
+                if (company == null)
+                {
+                    throw new OperationException("No company data found.");
+                }
+
                 return _mapper.Map<CompanyViewModel>(company);
+            }
+            catch (AppException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message, ex);
-                throw;
+                _logger.LogWarning($"Error - CompanyService_Get(id: {id}, error: {ex.Message}.");
+                throw new OperationException("Error occurred in getting the requested company data.");
             }
         }
 
@@ -66,10 +74,9 @@ namespace CompanyManagement.API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message, ex);
-                throw;
+                _logger.LogWarning($"Error - CompanyService_GetAll(error: {ex.Message}.");
+                throw new OperationException("Error occurred in getting the companies lists data.");
             }
-
         }
 
         public async Task<CompaniesListResultViewModel> GetList(CompanyFilterViewModel model)
@@ -144,55 +151,66 @@ namespace CompanyManagement.API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message, ex);
-                throw;
+                _logger.LogWarning($"Error - CompanyService_GetList(error: {ex.Message}.");
+                throw new OperationException("Error occurred in getting the companies list.");
             }
         }
 
         public async Task<CompanyViewModel> CreateOrUpdateCompany(UpdateCompanyViewModel model)
         {
-            var company = _mapper.Map<Company>(model);
-
-            if (company != null)
+            try
             {
-                var existingCompany = await _dbContext.Companies.Select(x => new { x.Id, x.CompanyName })
-                    .FirstOrDefaultAsync(company => company.CompanyName.ToLower() == model.CompanyName.ToLower());
+                var company = _mapper.Map<Company>(model);
 
-                if (existingCompany != null && existingCompany.Id != model.Id)
+                if (company != null)
                 {
-                    throw new CreateUpdateCompanyException($"Company Name \"{existingCompany.CompanyName}\" already exists.");
-                }
+                    var existingCompany = await _dbContext.Companies.Select(x => new { x.Id, x.CompanyName })
+                        .FirstOrDefaultAsync(company => company.CompanyName.ToLower() == model.CompanyName.ToLower());
 
-                if (model.Id.HasValue)
-                {
-                    var companyToUpdate = await _dbContext.Companies.FirstOrDefaultAsync(company => company.Id == model.Id);
-
-                    if (companyToUpdate == null)
+                    if (existingCompany != null && existingCompany.Id != model.Id)
                     {
-                        throw new CreateUpdateCompanyException("Company not found");
+                        throw new CreateUpdateCompanyException($"Company Name \"{model.CompanyName}\" already exists.");
                     }
 
-                    companyToUpdate.CompanyName = model.CompanyName;
-                    companyToUpdate.City = model.City;
-                    companyToUpdate.NumberOfEmployees = model.NumberOfEmployees;
-                    companyToUpdate.Industry = (IndustryType)Enum.Parse(typeof(IndustryType), model.Industry);
-                    companyToUpdate.ParentCompanyId = model.ParentCompanyId;
+                    if (model.Id.HasValue)
+                    {
+                        var companyToUpdate = await _dbContext.Companies.FirstOrDefaultAsync(company => company.Id == model.Id);
 
-                    _dbContext.Companies.Update(companyToUpdate);
-                }
-                else
-                {
-                    company.CompanyNo = GetNewCompanyNo();
-                    _dbContext.Add(company);
+                        if (companyToUpdate == null)
+                        {
+                            throw new CreateUpdateCompanyException("Company not found");
+                        }
+
+                        companyToUpdate.CompanyName = model.CompanyName;
+                        companyToUpdate.City = model.City;
+                        companyToUpdate.NumberOfEmployees = model.NumberOfEmployees;
+                        companyToUpdate.Industry = (IndustryType)Enum.Parse(typeof(IndustryType), model.Industry);
+                        companyToUpdate.ParentCompanyId = model.ParentCompanyId;
+
+                        _dbContext.Companies.Update(companyToUpdate);
+                    }
+                    else
+                    {
+                        company.CompanyNo = GetNewCompanyNo();
+                        _dbContext.Add(company);
+                    }
+
+                    company.CompanyLevel = await GetCompanyLevel(company.ParentCompanyId, 0);
+                    await _dbContext.SaveChangesAsync();
+                    return _mapper.Map<CompanyViewModel>(company);
                 }
 
-                company.CompanyLevel = await GetCompanyLevel(company.ParentCompanyId, 0);
-                await _dbContext.SaveChangesAsync();
-                return _mapper.Map<CompanyViewModel>(company);
+                throw new CreateUpdateCompanyException("Invalid company input.");
             }
-
-            throw new CreateUpdateCompanyException("Invalid company input.");
-
+            catch (AppException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Error - CompanyService_CreateOrUpdateCompany(CompanyName: {model.CompanyName}): error saving company, {ex.Message}.");
+                throw new CreateUpdateCompanyException("Error occurred in saving the company data.");
+            }
         }
 
         #region Private Methods

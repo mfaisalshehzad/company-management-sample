@@ -1,12 +1,10 @@
-﻿using Microsoft.Extensions.Localization;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+
 using System.Net;
 
 namespace CompanyManagement.API.Exceptions
 {
-    public abstract class AppException: Exception
+    public abstract class AppException : Exception
     {
         public string Code { get; set; }
         public HttpStatusCode StatusCode { get; set; }

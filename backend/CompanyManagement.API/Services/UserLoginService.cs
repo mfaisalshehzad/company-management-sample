@@ -15,20 +15,18 @@ namespace CompanyManagement.API.Services
     public class UserLoginService : IUserLoginService
     {
         private const string LOGIN_ERROR_MESSAGE = "User email or password is invalid.";
+        private const string PASSWORD_ERROR_MESSAGE = "Change password failed.";
         private readonly ILogger<UserLoginService> _logger;
         private readonly AppDbContext _dbContext;
-        private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly ITokenService _tokenService;
 
         public UserLoginService(AppDbContext dbContext,
             ITokenService tokenService,
-            IConfiguration config,
             IHttpContextAccessor contextAccessor,
             ILogger<UserLoginService> logger)
         {
             _logger = logger;
-            _config = config;
             _dbContext = dbContext;
             _contextAccessor = contextAccessor;
             _tokenService = tokenService;
@@ -36,17 +34,8 @@ namespace CompanyManagement.API.Services
 
         public async Task<IActionResult> LoginUser(UserLoginViewModel model)
         {
-            try
-            {
-                var token = await TryLoginUser(model.Email, model.Password);
-                return token == null ? new BadRequestResult() : (ActionResult)new OkObjectResult(token);
-            }
-            catch (Exception ex)
-            {
-
-                _logger.LogError(ex, $"Error - UserLoginService_LoginUser(Email: {model.Email}): {ex}");
-                throw new OperationException(ex.Message);
-            }
+            var token = await TryLoginUser(model.Email, model.Password);
+            return token == null ? new BadRequestResult() : (ActionResult)new OkObjectResult(token);
         }
 
         public async Task<IActionResult> GetUser()
@@ -69,7 +58,6 @@ namespace CompanyManagement.API.Services
             }
             catch (Exception)
             {
-
                 throw;
             }
         }
@@ -78,14 +66,13 @@ namespace CompanyManagement.API.Services
         {
             try
             {
-                var errorMessage = "Change password failed";
                 var userId = _contextAccessor.HttpContext?.GetUserId();
                 var authUser = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.Id == userId);
 
                 if (authUser == null)
                 {
                     _logger.LogWarning($"Fail - UserLoginService_ChangePassword(userId: {userId}): User Not found.");
-                    throw new ChangePasswordException(errorMessage);
+                    throw new ChangePasswordException(PASSWORD_ERROR_MESSAGE);
                 }
 
                 var token = await TryLoginUser(authUser, model.CurrentPassword);
@@ -93,14 +80,14 @@ namespace CompanyManagement.API.Services
                 if (token == null)
                 {
                     _logger.LogWarning($"Fail - UserLoginService_ChangePassword(Email: {authUser.Email}): Failed to save changes.");
-                    throw new ChangePasswordException(errorMessage);
+                    throw new ChangePasswordException(PASSWORD_ERROR_MESSAGE);
                 }
 
                 var isInputValid = model.NewPassword.IsNotNullOrEmpty() && model.ConfirmPassword.IsNotNullOrEmpty() && model.NewPassword.Equals(model.ConfirmPassword);
 
                 if (!isInputValid)
                 {
-                    throw new ChangePasswordException(errorMessage);
+                    throw new ChangePasswordException(PASSWORD_ERROR_MESSAGE);
                 }
 
                 // change password
@@ -112,19 +99,19 @@ namespace CompanyManagement.API.Services
                 if (trans == 0)
                 {
                     _logger.LogWarning($"Fail - UserLoginService_ChangePassword(Email: {authUser.Email}): Failed to save changes.");
-                    throw new ChangePasswordException(errorMessage);
+                    throw new ChangePasswordException(PASSWORD_ERROR_MESSAGE);
                 }
 
                 return new OkResult();
             }
-            catch (AppException ex)
+            catch (AppException)
             {
-                throw ex;
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error - UserLoginService_ChangePassword: {ex}");
-                throw new OperationException(ex.Message);
+                _logger.LogError(ex, $"Error - UserLoginService_ChangePassword: {ex.Message}");
+                throw new ChangePasswordException(PASSWORD_ERROR_MESSAGE);
             }
         }
 

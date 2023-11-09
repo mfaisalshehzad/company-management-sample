@@ -1,5 +1,6 @@
 using CompanyManagement.API.Contracts;
 using CompanyManagement.API.DBContexts;
+using CompanyManagement.API.ErrorHandler;
 using CompanyManagement.API.Services;
 
 using CompanyManagementService.Mappings;
@@ -10,22 +11,9 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
-using System.Reflection;
 using System.Text;
 
-//const string ALLOW_SPECIFIC_ORIGINS = "_allowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
-
-//Host.CreateDefaultBuilder(args)
-//    .ConfigureWebHostDefaults
-//    (
-//        webBuilder =>
-//        {
-//            webBuilder.UseStartup<Startup>();
-//        }
-//    )
-//    .Build()
-//    .Run();
 
 var services = builder.Services;
 var configuration = builder.Configuration;
@@ -53,16 +41,6 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 IdentityModelEventSource.ShowPII = true;
-
-//services.AddCors(options =>
-//{
-//    options.AddPolicy(name: ALLOW_SPECIFIC_ORIGINS, builder =>
-//    {
-//        builder.WithOrigins("*", "http://localhost:53580", "http://localhost:5000")
-//        .AllowAnyHeader()
-//        .AllowAnyMethod();
-//    });
-//});
 
 services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -123,6 +101,8 @@ if (env.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<ErrorHandlerMiddleware>();
 
 app.UseRouting();
 
